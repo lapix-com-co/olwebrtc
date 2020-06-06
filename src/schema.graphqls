@@ -1,0 +1,74 @@
+scalar JSON
+
+type Mutation {
+  sendSDPOffer(input: SendSDPOfferInput!): Room!
+  sendSDPAnswer(input: SendSDPAnswerInput!): Room!
+  sendICECandidate(input: SendICECandidateInput!): Room!
+  finishCall(input: FinishInput!): Room!
+}
+
+type Subscription {
+  onRoomInteraction(input: RoomInteractionInput!): RoomInteraction!
+}
+
+type RoomInteraction {
+  newPeer: JSON
+  newOffer: JSON
+  newAnswer: JSON
+  newIceCandidate: JSON
+  # The other peer has finished the call.
+  finished: JSON
+  # This means the other peer has disconnected from the web socket.
+  disconnected: JSON
+}
+
+type Room {
+  id: ID!
+}
+
+type SDPOffer {
+  sdp: JSON!
+}
+
+type SDPAnswer {
+  sdp: JSON!
+}
+
+type ICECandidate {
+  iceCandidate: JSON!
+}
+
+input SendSDPOfferInput {
+  sdp: JSON!
+  roomID: ID!
+}
+
+input SendSDPAnswerInput {
+  sdp: JSON!
+  roomID: ID!
+}
+
+input SendICECandidateInput {
+  iceCandidate: JSON!
+  roomID: ID!
+}
+
+input FinishInput {
+  roomID: ID!
+}
+
+input SDPOfferInput {
+  roomID: ID!
+}
+
+input SDPAnswerInput {
+  roomID: ID!
+}
+
+input NewICECandidateInput {
+  roomID: ID!
+}
+
+input RoomInteractionInput {
+  roomID: ID!
+}

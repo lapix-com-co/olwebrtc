@@ -1,0 +1,41 @@
+{
+  "name": "@lapix/olwebrtc",
+  "version": "1.0.0",
+  "description": "Otra Libreria Webrtc",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lapix-com-co/olwebrtc.git"
+  },
+  "keywords": [
+    "webrtc"
+  ],
+  "author": "Alejandro Rivera <alejo@lapix.com.co>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lapix-com-co/olwebrtc/issues"
+  },
+  "homepage": "https://github.com/lapix-com-co/olwebrtc#readme",
+  "devDependencies": {
+    "@types/sdp-transform": "^2.4.3",
+    "@types/webrtc": "0.0.26",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.5"
+  },
+  "peerDependencies": {
+    "@react-native-community/netinfo": "^5.9.2",
+    "apollo-client": "^2.6.10",
+    "apollo-link": "^1.2.14",
+    "apollo-link-ws": "^1.0.20",
+    "graphql": "^15.0.0",
+    "graphql-tag": "^2.10.3"
+  },
+  "dependencies": {
+    "loglevel": "^1.6.8",
+    "sdp-transform": "^2.14.0",
+    "tiny-emitter": "^2.1.0"
+  }
+}
