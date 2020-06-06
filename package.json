@@ -11,7 +11,8 @@
     "url": "git+https://github.com/lapix-com-co/olwebrtc.git"
   },
   "keywords": [
-    "webrtc"
+    "webrtc",
+    "react-native"
   ],
   "author": "Alejandro Rivera <alejo@lapix.com.co>",
   "license": "ISC",
