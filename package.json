@@ -4,6 +4,8 @@
   "description": "Otra Libreria Webrtc",
   "main": "dist/index.js",
   "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -12,6 +14,8 @@
   },
   "keywords": [
     "webrtc",
+    "p2p",
+    "rtc",
     "react-native"
   ],
   "author": "Alejandro Rivera <alejo@lapix.com.co>",
