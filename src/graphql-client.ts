@@ -20,9 +20,7 @@ export default function newCallClient(
   }
 
   return split(
-    ({ operationName }) => {
-      return signalingOperations.includes(operationName);
-    },
+    ({ operationName }) => signalingOperations.indexOf(operationName) >= 0,
     wsLink,
     currentClient
   );

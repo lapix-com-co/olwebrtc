@@ -1,4 +1,3 @@
-import { NetworkStatus } from "./call";
 import { TinyEmitter } from "tiny-emitter";
 import log from "./log";
 

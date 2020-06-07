@@ -1,14 +1,14 @@
-export interface ExternalControls {
+declare interface ExternalControls {
   video: boolean;
   audio: boolean;
 }
 
-export interface MessageContent {
+declare interface MessageContent {
   type: "ec" | "message";
   data: any;
 }
 
-export interface EventMap {
+declare interface EventMap {
   "track-change": undefined;
   "local-track-change": undefined;
   change: undefined;
@@ -17,51 +17,27 @@ export interface EventMap {
   error: Error;
 }
 
-export interface StartInput {
+declare interface StartInput {
   roomId: string;
   mediaStreamConstrains: MediaStreamConstraints;
 }
 
-export interface NetworkStatus {
+declare interface NetworkStatus {
   isOnline<K extends { timeout: number }>(op: K): Promise<boolean>;
   on(type: "change", cb: (isOnline: boolean) => any): void;
   off(type: "change", cb: (isOnline: boolean) => any): void;
 }
 
-export enum ErrorCodes {
-  SUPPORT_ERROR = 100,
-  POOR_CONNECTION_ERROR,
-  NO_INTERNET_ACCESS_ERROR,
-  DEVICE_NOT_FOUND_ERROR,
-  DEVICE_PERMISSION_ERROR,
-}
+declare type DeviceType = "camera" | "microphone";
 
-export class CallError extends Error {
-  public readonly code: ErrorCodes;
-  constructor(message: string, code: ErrorCodes) {
-    super(message);
-    this.code = code;
-  }
-}
-
-export type DeviceType = "camera" | "microphone";
-
-export class DeviceError extends CallError {
-  public readonly deviceType: DeviceType;
-  constructor(message: string, code: ErrorCodes, deviceType: DeviceType) {
-    super(message, code);
-    this.deviceType = deviceType;
-  }
-}
-
-export interface Statistics<K> {
+declare interface Statistics<K> {
   find(peer: RTCPeerConnection): Promise<K>;
 }
 
 /**
  * Handles a video call.
  */
-export interface Call {
+declare interface Call {
   finished: boolean;
   /**
    * Has been open to the signaling server.

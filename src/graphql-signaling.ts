@@ -1,16 +1,9 @@
-import {
-  ICECandidate,
-  RoomInfo,
-  SDPAnswer,
-  SDPOffer,
-  Signaling,
-  SignalingEventMap,
-} from "./signaling";
 import ApolloClient from "apollo-client";
 import gql from "graphql-tag";
 import { TinyEmitter } from "tiny-emitter";
 import { DocumentNode } from "graphql";
 import logger from "./log";
+import {FetchResult} from "apollo-link";
 
 export class GraphqlSignaling implements Signaling {
   private subscribed: boolean = false;
@@ -114,7 +107,8 @@ export class GraphqlSignaling implements Signaling {
     logger.trace("[SIGNALING] Will try to connect to the server");
 
     this.subscription = observer.subscribe({
-      next: ({ data }) => {
+      next: (props: FetchResult<any>) => {
+        const {data} = props;
         logger.debug("[SIGNALING] subscription next", data);
 
         const content = data.onRoomInteraction;

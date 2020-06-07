@@ -1,13 +1,9 @@
-import {NetworkStatus} from './call';
 import {TinyEmitter} from 'tiny-emitter';
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, {NetInfoState} from '@react-native-community/netinfo';
 
 export class RNCheckNetworkStatus implements NetworkStatus {
   private emitter: TinyEmitter = new TinyEmitter();
-  private timer?: any;
-  private listener?: () => void;
-
-  constructor() {}
+  private removeListener?: () => void;
 
   async isOnline<K extends {timeout: number}>(op: K): Promise<boolean> {
     NetInfo.configure({reachabilityRequestTimeout: op.timeout});
@@ -16,12 +12,12 @@ export class RNCheckNetworkStatus implements NetworkStatus {
   }
 
   on(_: 'change', _a: (isOnline: boolean) => any): void {
-    this.listener = NetInfo.addEventListener((state) => {
+    this.removeListener = NetInfo.addEventListener((state: NetInfoState) => {
       this.emitter.emit('change', state.isInternetReachable);
     });
   }
 
   off(_: 'change', _b: (isOnline: boolean) => any): void {
-    this.listener?.();
+    this.removeListener?.();
   }
 }

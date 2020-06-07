@@ -7,11 +7,16 @@ Yet another WebRTC Library.
 
 ## Usage
 
-```typescript
-import {FetchCheckNetworkStatus} from "./fetch-check-network-status";
-import {GraphqlSignaling} from "./graphql-signaling";
+```javascript
+import {WebRTCCall} from '@lapix/olwebrtc/dist/webrtc-call';
+import {GraphqlSignaling} from '@lapix/olwebrtc/dist/graphql-signaling';
+import {FetchCheckNetworkStatus} from '@lapix/olwebrtc/dist/fetch-check-network-status';
+import newCallClient from "@lapix/olwebrtc/dist/graphql-client"
 
-const apolloClient = newApolloClient()
+// Split the mutations and subscriptions based on the
+// current graphql implementation.
+const apolloClient = newCallClient({uri: "wss://my-signaling-server.io/query"}, currentApolloClient)
+
 const call = new WebRTCCall({
   // Zero Log everything, Five silence.
   logLevel: 5,
@@ -29,7 +34,7 @@ const call = new WebRTCCall({
   // Will check the network connection to if the peer connection
   // is closed before the call has been finished.
   network: new FetchCheckNetworkStatus(),
-  signaling: new GraphqlSignaling(apolloClient as ApolloClient<any>),
+  signaling: new GraphqlSignaling(apolloClient),
   rtcConfiguration: {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   },
@@ -77,7 +82,7 @@ this.finish();
 ```
 
 ## GraphQL
-Signaling server must implement the following [graphql schema](https://github.com/lapix-com-co/olwebrtc/src/schema.graphqls).
+Signaling server must implement the following [graphql schema](https://github.com/lapix-com-co/olwebrtc/tree/master/src/schema.graphqls).
 
 ## ReactNative
 It works with ReactNative, you only need to replace the

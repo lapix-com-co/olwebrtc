@@ -1,18 +1,9 @@
-import {
-  Call,
-  EventMap,
-  ExternalControls,
-  MessageContent,
-  NetworkStatus,
-  StartInput,
-  DeviceError, DeviceType, ErrorCodes, CallError,
-} from "./call";
-import { Signaling } from "./signaling";
 import { TinyEmitter } from "tiny-emitter";
 import sdpTransform from "sdp-transform";
 import { Bitrate, BitRateStats } from "./bitrate";
 import logger from "./log";
 import { LogLevelDesc } from "loglevel";
+import {CallError, DeviceError, ErrorCodes} from "./errors";
 
 type BandWidthLimit = number | "unlimited";
 
@@ -38,7 +29,6 @@ export class WebRTCCall implements Call {
   private rtcPeerConnection?: RTCPeerConnection;
   private roomId?: string;
   private emitter: TinyEmitter = new TinyEmitter();
-  private restarted: boolean = false;
 
   private dataChannel?: RTCDataChannel;
   private dataChannelOpen: boolean = false;
@@ -476,7 +466,6 @@ export class WebRTCCall implements Call {
       this.rtcPeerConnection
     );
 
-    this.restarted = false;
     this.dataChannelOpen = false;
     this.listeningForNetworkChange = false;
     this.iceQueue = [];
@@ -1037,7 +1026,6 @@ b=${modifier}:${bandwidth}\r
   private async onconnectionstatechange(): Promise<void> {
     switch (this.rtcPeerConnection?.connectionState) {
       case "connected":
-        this.restarted = false;
         break;
       case "disconnected":
         logger.warn(

@@ -1,8 +1,11 @@
 {
   "name": "@lapix/olwebrtc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Otra Libreria Webrtc",
-  "main": "dist/index.js",
+  "maintainers": [
+    "Alejandro Rivera <alejo@lapix.com.co>"
+  ],
+  "main": "dist/webrtc-call.js",
   "scripts": {
     "build": "tsc --build tsconfig.json",
     "prepublishOnly": "npm run build",
@@ -28,7 +31,14 @@
     "@types/sdp-transform": "^2.4.3",
     "@types/webrtc": "0.0.26",
     "tslint": "^6.1.2",
-    "typescript": "^3.9.5"
+    "typescript": "^3.9.5",
+    "@react-native-community/netinfo": "^5.9.2",
+    "apollo-client": "^2.6.10",
+    "apollo-link": "^1.2.14",
+    "apollo-link-ws": "^1.0.20",
+    "graphql": "^15.0.0",
+    "graphql-tag": "^2.10.3",
+    "subscriptions-transport-ws": "^0.9.16"
   },
   "peerDependencies": {
     "@react-native-community/netinfo": "^5.9.2",
@@ -36,7 +46,8 @@
     "apollo-link": "^1.2.14",
     "apollo-link-ws": "^1.0.20",
     "graphql": "^15.0.0",
-    "graphql-tag": "^2.10.3"
+    "graphql-tag": "^2.10.3",
+    "subscriptions-transport-ws": "^0.9.16"
   },
   "dependencies": {
     "loglevel": "^1.6.8",

@@ -1,8 +1,8 @@
-export interface RoomInfo {
+declare interface RoomInfo {
   id: string;
 }
 
-export interface SignalingEventMap {
+declare interface SignalingEventMap {
   /** The connection has been established with the signaling server */
   open: null;
   close: null;
@@ -23,22 +23,22 @@ export interface SignalingEventMap {
   error: Error;
 }
 
-export interface SDPOffer {
+declare interface SDPOffer {
   sdp: RTCSessionDescriptionInit;
   roomId: string;
 }
 
-export interface SDPAnswer {
+declare interface SDPAnswer {
   sdp: RTCSessionDescriptionInit;
   roomId: string;
 }
 
-export interface ICECandidate {
+declare interface ICECandidate {
   candidate: RTCIceCandidate;
   roomId: string;
 }
 
-export interface Signaling {
+declare interface Signaling {
   /**
    * Has the connection with the server been established.
    */
