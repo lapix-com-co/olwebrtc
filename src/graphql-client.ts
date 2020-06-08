@@ -33,6 +33,7 @@ export default function newCallClient(
       const operationName = fieldNode.name?.value;
       return signalingOperations.indexOf(operationName) >= 0;
     },
+    wsLink,
     currentClient
   );
 }
