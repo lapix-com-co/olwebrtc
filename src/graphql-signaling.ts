@@ -123,7 +123,7 @@ export class GraphqlSignaling implements Signaling {
         }
         if (content.finished) {
           this._dispatchEvent("finished", {
-            id: content.finished,
+            id: JSON.parse(content.finished),
           });
         }
         if (content.newOffer) {
