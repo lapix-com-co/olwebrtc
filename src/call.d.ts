@@ -93,7 +93,7 @@ declare interface Call {
   /**
    * Get the current device's streams.
    */
-  askUserMedia(c: MediaStreamConstraints): Promise<void>
+  askUserMedia(c: MediaStreamConstraints): Promise<boolean>;
 
   /**
    * Change the current audio status.
