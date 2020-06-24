@@ -91,6 +91,11 @@ declare interface Call {
   getDevices(): Promise<MediaDeviceInfo[]>;
 
   /**
+   * Get the current device's streams.
+   */
+  askUserMedia(c: MediaStreamConstraints): Promise<void>
+
+  /**
    * Change the current audio status.
    */
   toggleAudio(): Promise<void>;

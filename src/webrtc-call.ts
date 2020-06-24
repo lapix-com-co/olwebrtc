@@ -229,6 +229,12 @@ export class WebRTCCall implements Call {
     }
   }
 
+  public askUserMedia(c: MediaStreamConstraints): Promise<boolean> {
+    logger.debug("[DEVICES] will ask the devices with the following constrains", c);
+    this.mediaStreamConstrains = c;
+    return this.getMediaStream();
+  }
+
   private async getMediaStream(): Promise<boolean> {
     logger.debug("[DEVICES] will ask for the current devices");
     let devices = null;
