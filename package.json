@@ -1,11 +1,11 @@
 {
   "name": "@lapix/olwebrtc",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Otra Libreria Webrtc",
   "maintainers": [
     "Alejandro Rivera <alejo@lapix.com.co>"
   ],
-  "main": "dist/webrtc-call.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc --build tsconfig.json",
     "prepublishOnly": "npm run build",
@@ -21,7 +21,6 @@
     "rtc",
     "react-native"
   ],
-  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Alejandro Rivera <alejo@lapix.com.co>",
   "license": "ISC",

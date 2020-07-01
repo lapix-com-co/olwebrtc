@@ -54,7 +54,6 @@ export class Bitrate implements Statistics<BitRateStats> {
           break;
         case "outbound-rtp":
           if (report.mediaType === "video") {
-            debugger;
             if (this.outputVideoStats) {
               outputVideoBitrate = Bitrate.calcBitrate(
                 sentRecord,
