@@ -559,6 +559,14 @@ export class WebRTCCall implements Call {
     return this._peerStream;
   }
 
+  get peerVideo(): MediaStreamTrack[] | undefined {
+    return this._peerVideo;
+  }
+
+  get peerAudio(): MediaStreamTrack[] | undefined {
+    return this._peerAudio;
+  }
+
   get connected(): boolean {
     return this.signaling.connected;
   }
@@ -732,14 +740,12 @@ export class WebRTCCall implements Call {
       this.emitter.emit("track-change");
     };
 
-    this._peerVideo = ev.streams[0].getVideoTracks();
-    this._peerAudio = ev.streams[0].getAudioTracks();
+    ev.streams.forEach(stream => {
+      this._peerVideo = stream.getVideoTracks();
+      this._peerAudio = stream.getAudioTracks();
+    });
 
-    this._peerStream = new MediaStream([
-      ...this._peerVideo,
-      ...this._peerAudio,
-    ]);
-
+    this._peerStream = ev.streams as any;
     this.emitter.emit("track-change");
   }
 
