@@ -429,6 +429,11 @@ export class WebRTCCall implements Call {
   }
 
   async finish(): Promise<void> {
+    if (this._finished) {
+      logger.warn('the call has been finished')
+      return
+    }
+
     if (!this.roomId) {
       throw new Error(
         "Could not disconnect from the room because the roomId is empty"
@@ -602,7 +607,7 @@ export class WebRTCCall implements Call {
   }
 
   async nextVideoDevice(): Promise<void> {
-    // @ts-ignore
+    // @ts-ignore React native has this method.
     if (this.localStream?.getVideoTracks()?.[0]?._switchCamera) {
       // @ts-ignore
       this.localStream?.getVideoTracks()[0]._switchCamera();
