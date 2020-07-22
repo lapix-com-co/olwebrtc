@@ -448,8 +448,17 @@ export class WebRTCCall implements Call {
     this.clean();
     this.releaseTracks();
 
-    await this.signaling.finish({ id: roomId });
-    await this.signaling.disconnect({ id: roomId });
+    try {
+      await this.signaling.finish({ id: roomId });
+    } catch (e) {
+      logger.error(e);
+    }
+
+    try {
+      await this.signaling.disconnect({ id: roomId });
+    } catch (e) {
+      logger.error(e);
+    }
 
     this.emitter.emit("finish");
     this.emitter.emit("change");
@@ -460,14 +469,20 @@ export class WebRTCCall implements Call {
       this.peerStream.getTracks().forEach((track) => {
         track.stop();
       });
+
       this._peerStream = undefined;
+      this._peerAudio = undefined;
+      this._peerVideo = undefined;
     }
 
     if (this.localStream) {
       this.localStream.getTracks().forEach((track) => {
         track.stop();
       });
+
       this._localStream = undefined;
+      this._audioStream = undefined;
+      this._videoStream = undefined;
     }
   }
 
@@ -740,12 +755,17 @@ export class WebRTCCall implements Call {
       this.emitter.emit("track-change");
     };
 
+    let streams: MediaStreamTrack[] = [];
+
     ev.streams.forEach(stream => {
       this._peerVideo = stream.getVideoTracks();
       this._peerAudio = stream.getAudioTracks();
+
+      streams = streams.concat(this._peerVideo)
+        .concat(this._peerAudio);
     });
 
-    this._peerStream = ev.streams as any;
+    this._peerStream = new MediaStream(streams);
     this.emitter.emit("track-change");
   }
 
@@ -859,7 +879,7 @@ b=${modifier}:${bandwidth}\r
   private static logSDP(offer: RTCSessionDescriptionInit) {
     logger.info(
       offer.sdp?.split("\r\n").map((x) => {
-        let t = x.split("=");
+        const t = x.split("=");
         return { [t[0]]: t[1] };
       })
     );
@@ -905,6 +925,7 @@ b=${modifier}:${bandwidth}\r
         }
         break;
       case "closed":
+        logger.info('[ICE] connection closed')
         break;
       default:
         logger.info("[ICE] unhandled ice connection state change: ", state);
@@ -923,6 +944,7 @@ b=${modifier}:${bandwidth}\r
     const isOnline = await this.network.isOnline({ timeout: 3000 });
 
     if (isOnline) {
+      logger.warn('[COMMUNICATION] restarting the communication after little disconnection');
       await this.restartCall();
       return;
     }
@@ -935,8 +957,9 @@ b=${modifier}:${bandwidth}\r
       )
     );
 
-    const listener = async (isOnline: boolean) => {
-      if (isOnline) {
+    const listener = async (online: boolean) => {
+      if (online) {
+        logger.warn('[COMMUNICATION] restarting the communication after network issue');
         await this.restartCall();
 
         this.network.off("change", listener);
@@ -1200,13 +1223,13 @@ b=${modifier}:${bandwidth}\r
 
   async logBitRate() {
     if (this.rtcPeerConnection) {
-    const br = await this.getBitRate();
-    if (br) {
-        logger.info(`[STATS] Input Bitrate ${br.video.input}kb/s`);
-        logger.info(`[STATS] Output Bitrate ${br.video.output}kb/s`);
-      }
+      const br = await this.getBitRate();
+      if (br) {
+          logger.info(`[STATS] Video Bitrate in:${br.video.input}kb/s - out:${br.video.output}kb/s`);
+          logger.info(`[STATS] Audio Bitrate in:${br.audio.input}kb/s - out:${br.audio.output}kb/s`);
       }
     }
+  }
 
   private async brDiff(
     oldBitrate: BitRateStats,
