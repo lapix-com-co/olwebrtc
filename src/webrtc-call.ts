@@ -1074,6 +1074,7 @@ b=${modifier}:${bandwidth}\r
         break;
       case "failed":
         if (!this._finished) {
+          logger.info('[NEGOTIATION] Connection failed, trying reconnection');
           this.needReconnection();
         }
         break;
@@ -1179,11 +1180,11 @@ b=${modifier}:${bandwidth}\r
       return;
     }
 
-      this.runninDisconnectionStrategy = true;
+    this.runninDisconnectionStrategy = true;
 
     const oldBitrate = await this.getBitRate();
 
-      setTimeout(async () => {
+    setTimeout(async () => {
       let bitRateDiff = 0;
       let oldValue = 0;
 
@@ -1199,16 +1200,16 @@ b=${modifier}:${bandwidth}\r
         // Check our audio stats.
         bitRateDiff = await this.brDiff(oldBitrate, "audio", "output");
         oldValue = oldBitrate.audio.output;
-      } else if (this.externalControls?.video) {
+      } else if (this.externalControls?.audio) {
         // Check external audio stats.
         bitRateDiff = await this.brDiff(oldBitrate, "audio", "input");
         oldValue = oldBitrate.audio.input;
-        }
+      }
 
       await this.checkDifferenceAndRestart(bitRateDiff, oldValue);
-        this.runninDisconnectionStrategy = false;
-      }, 4000);
-    }
+      this.runninDisconnectionStrategy = false;
+    }, 4000);
+  }
 
   private async getBitRate(): Promise<BitRateStats> {
     if (!this.bitRateLog) {
@@ -1244,7 +1245,7 @@ b=${modifier}:${bandwidth}\r
     difference: number,
     oldBitrate: number
   ): Promise<void> {
-    if (difference < 0) {
+    if (difference < -100) {
       logger.warn(
         "[STATS] poor bit rate, will restart the ice candidates, difference " +
           `(${difference}) first:${oldBitrate}kbits/s current: ${
