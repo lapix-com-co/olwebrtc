@@ -1022,15 +1022,14 @@ b=${modifier}:${bandwidth}\r
           break;
         }
         setTimeout(async () => {
-          if (this.rtcPeerConnection?.iceConnectionState === "checking") {
+          if (this.rtcPeerConnection?.iceConnectionState === "checking" || this.rtcPeerConnection?.connectionState === 'connecting') {
             logger.warn(
-              "[ICE] probably connection is stucked, ice takes 3s checking"
+              `[ICE] probably connection is stucked, ice takes 3s checking this iceConnectionState === ${this.rtcPeerConnection?.iceConnectionState} and the connectionState === ${this.rtcPeerConnection?.connectionState}`
             );
             await this.restartCall();
           } else {
             logger.debug(
-              "[ICE] in the ice gathering check task did not need to restart the call because the new iceConnectionState is",
-              this.rtcPeerConnection?.iceConnectionState
+              `[ICE] in the ice gathering check task did not need to restart the call because the new iceConnectionState is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
             );
           }
         }, 3000);
