@@ -559,7 +559,7 @@ export class WebRTCCall implements Call {
   }
 
   get matched(): boolean {
-    return this.dataChannelOpen;
+    return this.rtcPeerConnection?.connectionState === "connected";
   }
 
   get externalControls(): ExternalControls | undefined {
@@ -1065,8 +1065,10 @@ b=${modifier}:${bandwidth}\r
   private async onconnectionstatechange(): Promise<void> {
     switch (this.rtcPeerConnection?.connectionState) {
       case "connected":
+        this.emitter.emit("change");
         break;
       case "disconnected":
+        this.emitter.emit("change");
         logger.warn(
           "[NEGOTIATION] peers disconnected, but we still can reconnect"
         );
