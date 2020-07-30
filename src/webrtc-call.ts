@@ -16,6 +16,7 @@ interface WebRTCCallOptions {
   allowIceStalledChecking?: boolean;
   bandwidth?: BandWidthLimit;
   logLevel?: LogLevelDesc;
+  stalledTimeout?: number;
 }
 
 export class WebRTCCall implements Call {
@@ -50,6 +51,7 @@ export class WebRTCCall implements Call {
   private allowBitrateChecking: boolean = false;
   private allowIceStalledChecking: boolean;
   private bandwidth: BandWidthLimit;
+  private stalledTimeout: number;
 
   constructor(options: WebRTCCallOptions) {
     this.signaling = options.signaling;
@@ -59,6 +61,7 @@ export class WebRTCCall implements Call {
     this.allowBitrateChecking = options.allowBitrateChecking || false;
     this.allowIceStalledChecking = options.allowIceStalledChecking || false;
     this.bandwidth = options.bandwidth || 600;
+    this.stalledTimeout = options.stalledTimeout || 5000;
 
     logger.setLevel(typeof options.logLevel !== "number" ? logger.levels.WARN : options.logLevel);
 
@@ -162,7 +165,7 @@ export class WebRTCCall implements Call {
       } else if (this.rtcPeerConnection?.signalingState === "stable") {
         this.logConnectionsStates();
         logger.warn(
-          "[SIGNALING] receive a new ice candidate but we have not a local descriptor or a remote descriptor"
+          "[SIGNALING] receive a new ICE candidate but we does not have a local descriptor or a remote descriptor"
         );
       } else {
         this.iceQueue.push(candidate);
@@ -1024,15 +1027,17 @@ b=${modifier}:${bandwidth}\r
         setTimeout(async () => {
           if (this.rtcPeerConnection?.iceConnectionState === "checking" || this.rtcPeerConnection?.connectionState === 'connecting') {
             logger.warn(
-              `[ICE] probably connection is stucked, ice takes 3s checking this iceConnectionState === ${this.rtcPeerConnection?.iceConnectionState} and the connectionState === ${this.rtcPeerConnection?.connectionState}`
+              '[ICE] probably connection is stucked, ice takes 3s checking this iceConnectionState ' +
+              `=== ${this.rtcPeerConnection?.iceConnectionState} and the connectionState === ${this.rtcPeerConnection?.connectionState}`
             );
             await this.restartCall();
           } else {
             logger.debug(
-              `[ICE] in the ice gathering check task did not need to restart the call because the new iceConnectionState is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
+              '[ICE] in the ice gathering check task did not need to restart the call because the new iceConnectionState ' +
+              `is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
             );
           }
-        }, 3000);
+        }, this.stalledTimeout);
         break;
       default:
         logger.debug(
@@ -1171,7 +1176,7 @@ b=${modifier}:${bandwidth}\r
    * If the bitrate has not increased in the las 4s we'll restart the ICE.
    * @private
    */
-  private async runDisconnectedStrategy() {
+  private async runDisconnectedStrategy(): Promise<void> {
     if (this.allowBitrateChecking) {
       return;
     }
@@ -1220,7 +1225,10 @@ b=${modifier}:${bandwidth}\r
       return await this.bitRateLog.find(this.rtcPeerConnection);
     }
 
-    return { video: { input: 0, output: 0 }, audio: { input: 0, output: 0 } };
+    return {
+      video: { input: 0, output: 0 },
+      audio: { input: 0, output: 0 },
+    };
   }
 
   async logBitRate() {
