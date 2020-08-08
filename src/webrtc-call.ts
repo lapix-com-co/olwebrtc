@@ -20,6 +20,7 @@ interface WebRTCCallOptions {
 }
 
 export class WebRTCCall implements Call {
+  private _id: number;
   private _localStream?: MediaStream;
   private _audioStream?: MediaStreamTrack;
   private _videoStream?: MediaStreamTrack;
@@ -62,6 +63,7 @@ export class WebRTCCall implements Call {
     this.allowIceStalledChecking = options.allowIceStalledChecking || false;
     this.bandwidth = options.bandwidth || 600;
     this.stalledTimeout = options.stalledTimeout || 5000;
+    this._id = Math.floor(Math.random() * 1000);
 
     logger.setLevel(typeof options.logLevel !== "number" ? logger.levels.WARN : options.logLevel);
 
@@ -76,6 +78,8 @@ export class WebRTCCall implements Call {
   }
 
   async start(input: StartInput): Promise<void> {
+    logger.info(`Will start the call with id: ${this.id} in the room ${input.roomId}`)
+
     this.roomId = input.roomId;
     this.mediaStreamConstrains = input.mediaStreamConstrains;
     this._finished = false;
@@ -209,12 +213,10 @@ export class WebRTCCall implements Call {
   }
 
   private async createPeerConnection(): Promise<boolean> {
-    logger.info("[SIGNALING] will create a new peer");
+    logger.info(`[SIGNALING] will create a new peer: id = ${this.id}`);
 
     // If we have a valid connection lets close it.
-    if (this.rtcPeerConnection) {
-      this.clean();
-    }
+    await this.clean();
 
     try {
       this.rtcPeerConnection = new RTCPeerConnection(this.rtcConfiguration);
@@ -433,13 +435,13 @@ export class WebRTCCall implements Call {
 
   async finish(): Promise<void> {
     if (this._finished) {
-      logger.warn('the call has been finished')
+      logger.warn(`The call has been finished: ${this.id}`)
       return
     }
 
     if (!this.roomId) {
       throw new Error(
-        "Could not disconnect from the room because the roomId is empty"
+        `Could not disconnect from the room because the roomId is empty: ${this.id}`
       );
     }
 
@@ -449,7 +451,6 @@ export class WebRTCCall implements Call {
     this._finished = true;
 
     this.clean();
-    this.releaseTracks();
 
     try {
       await this.signaling.finish({ id: roomId });
@@ -481,6 +482,12 @@ export class WebRTCCall implements Call {
     if (this.localStream) {
       this.localStream.getTracks().forEach((track) => {
         track.stop();
+
+        // @ts-ignore ReactNative
+        if (track.release) {
+          // @ts-ignore ReactNative
+          track.release();
+        }
       });
 
       this._localStream = undefined;
@@ -489,11 +496,13 @@ export class WebRTCCall implements Call {
     }
   }
 
-  private clean(): void {
+  public async clean(): Promise<void> {
     logger.info(
-      "[NEGOTIATION] Cleaning up PeerConnection to ",
+      `[NEGOTIATION] Cleaning up PeerConnection ${this.id}`,
       this.rtcPeerConnection
     );
+
+    this.releaseTracks();
 
     this.dataChannelOpen = false;
     this.listeningForNetworkChange = false;
@@ -547,6 +556,12 @@ export class WebRTCCall implements Call {
 
       this.rtcPeerConnection = undefined;
     }
+  }
+
+  get id(): number {
+    const localId = this._id;
+    // @ts-ignore ReactNative private value.
+    return this.rtcPeerConnection._peerConnectionId || localId;
   }
 
   get finished(): boolean {
@@ -903,7 +918,7 @@ b=${modifier}:${bandwidth}\r
         break;
       case "disconnected":
         logger.warn("[ICE] peers disconnected, but we still can reconnect");
-          this.runDisconnectedStrategy();
+        this.runDisconnectedStrategy();
         break;
       case "failed":
         if (this._finished) {
@@ -947,7 +962,7 @@ b=${modifier}:${bandwidth}\r
     const isOnline = await this.network.isOnline({ timeout: 3000 });
 
     if (isOnline) {
-      logger.warn('[COMMUNICATION] restarting the communication after little disconnection');
+      logger.warn('[COMMUNICATION] restarting the communication after some network error');
       await this.restartCall();
       return;
     }
@@ -974,7 +989,7 @@ b=${modifier}:${bandwidth}\r
   }
 
   private async restartCall() {
-    this.clean();
+    await this.clean();
     await this.start({
       mediaStreamConstrains: this
         .mediaStreamConstrains as MediaStreamConstraints,
@@ -1027,7 +1042,7 @@ b=${modifier}:${bandwidth}\r
         setTimeout(async () => {
           if (this.rtcPeerConnection?.iceConnectionState === "checking" || this.rtcPeerConnection?.connectionState === 'connecting') {
             logger.warn(
-              '[ICE] probably connection is stucked, ice takes 3s checking this iceConnectionState ' +
+              `[ICE] probably connection is stucked, ice takes ${this.stalledTimeout / 1000}s checking this iceConnectionState ` +
               `=== ${this.rtcPeerConnection?.iceConnectionState} and the connectionState === ${this.rtcPeerConnection?.connectionState}`
             );
             await this.restartCall();
@@ -1173,7 +1188,7 @@ b=${modifier}:${bandwidth}\r
   }
 
   /**
-   * If the bitrate has not increased in the las 4s we'll restart the ICE.
+   * If the bitrate has not increased in the last 4s we'll restart the ICE.
    * @private
    */
   private async runDisconnectedStrategy(): Promise<void> {
@@ -1182,7 +1197,7 @@ b=${modifier}:${bandwidth}\r
     }
 
     if (this.runninDisconnectionStrategy) {
-      logger.warn("[COMMUNICATION] still runnig the disconnection strategy");
+      logger.warn("[COMMUNICATION] still running the disconnection strategy");
       return;
     }
 

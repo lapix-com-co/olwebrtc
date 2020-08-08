@@ -86,6 +86,12 @@ declare interface Call {
   finish(): Promise<void>;
 
   /**
+   * Clean removes the allocated resources but
+   * does not finish the current call.
+   */
+  clean(): Promise<void>;
+
+  /**
    * Get the local available devices.
    */
   getDevices(): Promise<MediaDeviceInfo[]>;
