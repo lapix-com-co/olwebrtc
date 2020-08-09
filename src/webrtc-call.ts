@@ -451,6 +451,7 @@ export class WebRTCCall implements Call {
     this.mediaStreamConstrains = undefined;
     this._finished = true;
 
+    this.releaseTracks();
     this.clean();
 
     try {
@@ -469,7 +470,7 @@ export class WebRTCCall implements Call {
     this.emitter.emit("change");
   }
 
-  private releaseTracks() {
+  private clearTracks() {
     if (this.peerStream) {
       this.peerStream.getTracks().forEach((track) => {
         track.stop();
@@ -483,6 +484,18 @@ export class WebRTCCall implements Call {
     if (this.localStream) {
       this.localStream.getTracks().forEach((track) => {
         track.stop();
+      });
+
+      this._localStream = undefined;
+      this._audioStream = undefined;
+      this._videoStream = undefined;
+    }
+  }
+
+  private releaseTracks() {
+    if (this.localStream) {
+      this.localStream.getTracks().forEach((track) => {
+        track.stop();
 
         // @ts-ignore ReactNative
         if (track.release) {
@@ -490,10 +503,6 @@ export class WebRTCCall implements Call {
           track.release();
         }
       });
-
-      this._localStream = undefined;
-      this._audioStream = undefined;
-      this._videoStream = undefined;
     }
   }
 
@@ -503,7 +512,7 @@ export class WebRTCCall implements Call {
       this.rtcPeerConnection
     );
 
-    this.releaseTracks();
+    this.clearTracks();
 
     this.dataChannelOpen = false;
     this.listeningForNetworkChange = false;
