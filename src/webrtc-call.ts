@@ -54,6 +54,9 @@ export class WebRTCCall implements Call {
   private bandwidth: BandWidthLimit;
   private stalledTimeout: number;
 
+  private stallCheckingTimer?: number;
+  private disconnectTimer?: number;
+
   constructor(options: WebRTCCallOptions) {
     this.signaling = options.signaling;
     this.network = options.network;
@@ -72,7 +75,7 @@ export class WebRTCCall implements Call {
       window.call = this;
     }
 
-    if (logger.getLevel() <= logger.levels.INFO && this.allowBitrateChecking) {
+    if (logger.getLevel() <= logger.levels.DEBUG && this.allowBitrateChecking) {
       setInterval(async () => this.logBitRate(), 1000);
     }
   }
@@ -513,6 +516,16 @@ export class WebRTCCall implements Call {
     );
 
     this.clearTracks();
+
+    if (this.stallCheckingTimer) {
+      clearTimeout(this.stallCheckingTimer);
+      this.stallCheckingTimer = undefined;
+    }
+
+    if (this.disconnectTimer) {
+      clearTimeout(this.disconnectTimer);
+      this.disconnectTimer = undefined;
+    }
 
     this.dataChannelOpen = false;
     this.listeningForNetworkChange = false;
@@ -1047,7 +1060,7 @@ b=${modifier}:${bandwidth}\r
           );
           break;
         }
-        setTimeout(async () => {
+        this.stallCheckingTimer = setTimeout(async () => {
           if (this.rtcPeerConnection?.iceConnectionState === "checking" || this.rtcPeerConnection?.connectionState === 'connecting') {
             logger.warn(
               `[ICE] probably connection is stucked, ice takes ${this.stalledTimeout / 1000}s checking this iceConnectionState ` +
@@ -1060,7 +1073,7 @@ b=${modifier}:${bandwidth}\r
               `is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
             );
           }
-        }, this.stalledTimeout);
+        }, this.stalledTimeout) as number;
         break;
       default:
         logger.debug(
@@ -1213,7 +1226,7 @@ b=${modifier}:${bandwidth}\r
 
     const oldBitrate = await this.getBitRate();
 
-    setTimeout(async () => {
+    this.disconnectTimer = setTimeout(async () => {
       let bitRateDiff = 0;
       let oldValue = 0;
 
