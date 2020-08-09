@@ -164,12 +164,13 @@ export class WebRTCCall implements Call {
 
     this.signaling.on("newIceCandidate", ({ candidate }) => {
       if (this.rtcPeerConnection?.remoteDescription) {
-        logger.info("[SIGNALING] add new ice candidate");
+        logger.debug("[SIGNALING] add new ice candidate", candidate);
         this.addIceCandidate(candidate);
       } else if (this.rtcPeerConnection?.signalingState === "stable") {
         this.logConnectionsStates();
         logger.warn(
-          "[SIGNALING] receive a new ICE candidate but we does not have a local descriptor or a remote descriptor"
+          "[SIGNALING] receive a new ICE candidate but we does not have a local descriptor or a remote descriptor",
+          candidate
         );
       } else {
         this.iceQueue.push(candidate);
@@ -559,9 +560,7 @@ export class WebRTCCall implements Call {
   }
 
   get id(): number {
-    const localId = this._id;
-    // @ts-ignore ReactNative private value.
-    return this.rtcPeerConnection._peerConnectionId || localId;
+    return this._id
   }
 
   get finished(): boolean {
@@ -1047,7 +1046,7 @@ b=${modifier}:${bandwidth}\r
             );
             await this.restartCall();
           } else {
-            logger.debug(
+            logger.info(
               '[ICE] in the ice gathering check task did not need to restart the call because the new iceConnectionState ' +
               `is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
             );
