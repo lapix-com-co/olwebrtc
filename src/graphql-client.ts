@@ -1,7 +1,8 @@
-import { ApolloLink, split } from "apollo-link";
-import { WebSocketLink } from "apollo-link-ws";
+import { ApolloLink, split } from "@apollo/client";
+import { WebSocketLink } from "@apollo/client/link/ws";
 import {FieldNode, OperationDefinitionNode} from "graphql";
 
+// Those operations will use the ws transport layer.
 const signalingOperations: string[] = [
   "sendSDPOffer",
   "sendSDPAnswer",

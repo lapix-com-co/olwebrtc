@@ -1,9 +1,7 @@
-import ApolloClient from "apollo-client";
-import gql from "graphql-tag";
+import { ApolloClient, gql, FetchResult } from "@apollo/client";
 import { TinyEmitter } from "tiny-emitter";
 import { DocumentNode } from "graphql";
 import logger from "./log";
-import {FetchResult} from "apollo-link";
 
 export class GraphqlSignaling implements Signaling {
   private subscribed: boolean = false;

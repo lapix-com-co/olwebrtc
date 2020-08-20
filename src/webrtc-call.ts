@@ -1,9 +1,9 @@
 import { TinyEmitter } from "tiny-emitter";
 import sdpTransform from "sdp-transform";
-import { Bitrate, BitRateStats } from "./bitrate";
-import logger from "./log";
 import { LogLevelDesc } from "loglevel";
 import {CallError, DeviceError, ErrorCodes} from "./errors";
+import { Bitrate, BitRateStats } from "./bitrate";
+import logger from "./log";
 
 type BandWidthLimit = number | "unlimited";
 

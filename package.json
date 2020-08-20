@@ -1,7 +1,7 @@
 {
   "name": "@lapix/olwebrtc",
-  "version": "1.0.24",
-  "description": "Otra Libreria Webrtc",
+  "version": "2.0.0",
+  "description": "Otra Libreria WebRTC",
   "maintainers": [
     "Alejandro Rivera <alejo@lapix.com.co>"
   ],
@@ -29,26 +29,20 @@
   },
   "homepage": "https://github.com/lapix-com-co/olwebrtc#readme",
   "devDependencies": {
+    "@apollo/client": "^3.1.3",
+    "@react-native-community/netinfo": "^5.9.2",
     "@types/sdp-transform": "^2.4.3",
     "@types/webrtc": "0.0.26",
-    "tslint": "^6.1.2",
-    "typescript": "^3.9.5",
-    "@react-native-community/netinfo": "^5.9.2",
-    "apollo-client": "^2.6.10",
-    "apollo-link": "^1.2.14",
-    "apollo-link-ws": "^1.0.20",
     "graphql": "^15.0.0",
-    "graphql-tag": "^2.10.3",
-    "subscriptions-transport-ws": "^0.9.16"
+    "react": "^16.13.1",
+    "subscriptions-transport-ws": "^0.9.18",
+    "typescript": "^3.9.5"
   },
   "peerDependencies": {
+    "@apollo/client": "^3.1.3",
     "@react-native-community/netinfo": "^5.9.2",
-    "apollo-client": "^2.6.10",
-    "apollo-link": "^1.2.14",
-    "apollo-link-ws": "^1.0.20",
-    "graphql": "^15.0.0",
-    "graphql-tag": "^2.10.3",
-    "subscriptions-transport-ws": "^0.9.16"
+    "subscriptions-transport-ws": "^0.9.18",
+    "graphql": "^15.0.0"
   },
   "dependencies": {
     "loglevel": "^1.6.8",
