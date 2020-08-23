@@ -24,8 +24,11 @@ export class WebRTCCall implements Call {
   private _localStream?: MediaStream;
   private _audioStream?: MediaStreamTrack;
   private _videoStream?: MediaStreamTrack;
+  private _screenStream?: MediaStreamTrack;
   private _videoDevice?: MediaDeviceInfo;
   private _audioDevice?: MediaDeviceInfo;
+
+  private sharingVideo: boolean;
 
   private _peerStream?: MediaStream;
   private rtcPeerConnection?: RTCPeerConnection;
@@ -34,6 +37,7 @@ export class WebRTCCall implements Call {
 
   private dataChannel?: RTCDataChannel;
   private dataChannelOpen: boolean = false;
+  private screenStreamConstrains?: MediaStreamConstraints;
   private mediaStreamConstrains?: MediaStreamConstraints;
   private _finished: boolean = false;
   private listeningForNetworkChange: boolean = false;
@@ -67,6 +71,7 @@ export class WebRTCCall implements Call {
     this.bandwidth = options.bandwidth || 600;
     this.stalledTimeout = options.stalledTimeout || 5000;
     this._id = Math.floor(Math.random() * 1000);
+    this.sharingVideo = true;
 
     logger.setLevel(typeof options.logLevel !== "number" ? logger.levels.WARN : options.logLevel);
 
@@ -84,7 +89,8 @@ export class WebRTCCall implements Call {
     logger.info(`Will start the call with id: ${this.id} in the room ${input.roomId}`)
 
     this.roomId = input.roomId;
-    this.mediaStreamConstrains = input.mediaStreamConstrains;
+    this.mediaStreamConstrains = input.mediaStreamConstrains.camera;
+    this.screenStreamConstrains = input.mediaStreamConstrains.screen;
     this._finished = false;
 
     const result = await this.getMediaStream();
@@ -220,7 +226,7 @@ export class WebRTCCall implements Call {
     logger.info(`[SIGNALING] will create a new peer: id = ${this.id}`);
 
     // If we have a valid connection lets close it.
-    await this.clean();
+    await this.clearConnection();
 
     try {
       this.rtcPeerConnection = new RTCPeerConnection(this.rtcConfiguration);
@@ -244,9 +250,111 @@ export class WebRTCCall implements Call {
     return this.getMediaStream();
   }
 
+  public async shareScreen(): Promise<void> {
+    this.sharingVideo = false;
+    await this.restartCall();
+  } 
+
+  public async shareVideo(): Promise<void> {
+    // release video if needed.
+    this.sharingVideo = true;
+    await this.restartCall();
+  }
+
+  private async getScreenStream(): Promise<boolean> {
+    logger.debug("[SCREEN] will ask for the current screen");
+
+    if (!('getDisplayMedia' in navigator.mediaDevices)) {
+      this.emitter.emit("error", new Error('"Screen sharing" is not supported in the current device'));
+      return false
+    }
+
+    const screenConstrains: MediaStreamConstraints = {
+      video: this.screenStreamConstrains?.video,
+    };
+
+    try {
+      this._screenStream = (
+        // @ts-ignore 
+        await navigator.mediaDevices.getDisplayMedia(screenConstrains)
+      )
+        .getVideoTracks()
+        .find((v: MediaStreamTrack) => v.enabled);
+    } catch (e) {
+      this.handleDeviceError(e, "screen");
+      return false;
+    }
+
+    const result = await this.getAudioStream();
+    if (!result) {
+      return false;
+    }
+
+    this._localStream = new MediaStream([
+      this._screenStream as MediaStreamTrack,
+      this._audioStream as MediaStreamTrack,
+    ]);
+    this.emitter.emit("local-track-change");
+
+    return true;
+  }
+
+  private async getAudioStream(): Promise<boolean> {
+    logger.debug("[SOUND] will ask for the current sound");
+    let devices: MediaDeviceInfo[];
+
+    try {
+      devices = await navigator.mediaDevices.enumerateDevices();
+      logger.info("[DEVICES] current devices", devices);
+    } catch (e) {
+      this.handleDeviceError(e, "camera");
+      return false;
+    }
+
+    const audioConstrains: MediaStreamConstraints = {
+      audio: this.mediaStreamConstrains?.audio,
+    };
+
+    // Check if the device is already plugged-in.
+    if (this._audioDevice) {
+      this._audioDevice = devices.find(
+        (device) => device.deviceId === this._audioDevice?.deviceId
+      );
+    }
+
+    if (!this._audioDevice) {
+      this._audioDevice = devices.find(
+        (device) => device.kind === "audioinput"
+      );
+    }
+
+    (audioConstrains.audio as MediaTrackConstraints).deviceId = this._audioDevice?.deviceId;
+
+    try {
+      this._audioStream = (
+        await navigator.mediaDevices.getUserMedia(audioConstrains)
+      )
+        .getAudioTracks()
+        .find((a) => a.enabled) as MediaStreamTrack;
+    } catch (e) {
+      this.handleDeviceError(e, "microphone");
+      return false;
+    }
+
+    return true;
+  }
+
   private async getMediaStream(): Promise<boolean> {
+    if (this.sharingVideo) {
+      return this.getVideoStream();
+    } 
+
+    return this.getScreenStream();
+  }
+
+  private async getVideoStream(): Promise<boolean> {
     logger.debug("[DEVICES] will ask for the current devices");
-    let devices = null;
+    let devices: MediaDeviceInfo[];
 
     try {
       devices = await navigator.mediaDevices.enumerateDevices();
@@ -259,21 +367,11 @@ export class WebRTCCall implements Call {
     const videoConstrains: MediaStreamConstraints = {
       video: this.mediaStreamConstrains?.video,
     };
-    const audioConstrains: MediaStreamConstraints = {
-      audio: this.mediaStreamConstrains?.audio,
-    };
 
     // Check if the device is alredy pluged-in.
     if (this._videoDevice) {
       this._videoDevice = devices.find(
         (device) => device.deviceId === this._videoDevice?.deviceId
-      );
-    }
-
-    // Check if the device is alredy pluged-in.
-    if (this._audioDevice) {
-      this._audioDevice = devices.find(
-        (device) => device.deviceId === this._audioDevice?.deviceId
       );
     }
 
@@ -297,14 +395,7 @@ export class WebRTCCall implements Call {
       }
     }
 
-    if (!this._audioDevice) {
-      this._audioDevice = devices.find(
-        (device) => device.kind === "audioinput"
-      );
-    }
-
     (videoConstrains.video as MediaTrackConstraints).deviceId = this._videoDevice?.deviceId;
-    (audioConstrains.audio as MediaTrackConstraints).deviceId = this._audioDevice?.deviceId;
 
     try {
       this._videoStream = (
@@ -317,18 +408,15 @@ export class WebRTCCall implements Call {
       return false;
     }
 
-    try {
-      this._audioStream = (
-        await navigator.mediaDevices.getUserMedia(audioConstrains)
-      )
-        .getAudioTracks()
-        .find((a) => a.enabled) as MediaStreamTrack;
-    } catch (e) {
-      this.handleDeviceError(e, "microphone");
+    const result = await this.getAudioStream();
+    if (!result) {
       return false;
     }
 
-    this._localStream = new MediaStream([this._videoStream, this._audioStream]);
+    this._localStream = new MediaStream([
+      this._videoStream as MediaStreamTrack,
+      this._audioStream as MediaStreamTrack,
+    ]);
     this.emitter.emit("local-track-change");
 
     return true;
@@ -385,6 +473,7 @@ export class WebRTCCall implements Call {
 
   private async getMediaStreamAndAddTracks(): Promise<boolean> {
     if (!this.localStream) {
+      logger.warn("[STREAM] the local stream is empty, will get a new one");
       await this.getMediaStream();
     }
 
@@ -509,14 +598,7 @@ export class WebRTCCall implements Call {
     }
   }
 
-  public async clean(): Promise<void> {
-    logger.info(
-      `[NEGOTIATION] Cleaning up PeerConnection ${this.id}`,
-      this.rtcPeerConnection
-    );
-
-    this.clearTracks();
-
+  private clearConnection(): void {
     if (this.stallCheckingTimer) {
       clearTimeout(this.stallCheckingTimer);
       this.stallCheckingTimer = undefined;
@@ -576,13 +658,27 @@ export class WebRTCCall implements Call {
           peerConnection.connectionState
         );
       }
-
-      this.rtcPeerConnection = undefined;
     }
+
+    this.rtcPeerConnection = undefined;
+  }
+
+  public async clean(): Promise<void> {
+    logger.info(
+      `[NEGOTIATION] Cleaning up PeerConnection ${this.id}`,
+      this.rtcPeerConnection
+    );
+
+    this.clearTracks();
+    this.clearConnection();
   }
 
   get id(): number {
     return this._id
+  }
+
+  get sharingScreen(): boolean {
+    return !this.sharingVideo;
   }
 
   get finished(): boolean {
@@ -1012,8 +1108,10 @@ b=${modifier}:${bandwidth}\r
   private async restartCall() {
     await this.clean();
     await this.start({
-      mediaStreamConstrains: this
-        .mediaStreamConstrains as MediaStreamConstraints,
+      mediaStreamConstrains: {
+        camera: this.mediaStreamConstrains as MediaStreamConstraints,
+        screen: this.screenStreamConstrains as MediaStreamConstraints,
+      },
       roomId: this.roomId as string,
     });
     await this.onNewPeer();
@@ -1073,7 +1171,7 @@ b=${modifier}:${bandwidth}\r
               `is ${this.rtcPeerConnection?.iceConnectionState} and the connectionState is ${this.rtcPeerConnection?.connectionState}`
             );
           }
-        }, this.stalledTimeout) as number;
+        }, this.stalledTimeout) as any;
         break;
       default:
         logger.debug(
@@ -1161,7 +1259,7 @@ b=${modifier}:${bandwidth}\r
         this.rtcPeerConnection?.remoteDescription?.sdp || ""
       );
 
-      parsedRD.media.forEach((m) => {
+      parsedRD.media.forEach((m: any) => {
         logger.debug("[ICE] ==========0");
         logger.debug(
           "[ICE] compare sdpMid incoming === remoteSession",
@@ -1250,7 +1348,7 @@ b=${modifier}:${bandwidth}\r
 
       await this.checkDifferenceAndRestart(bitRateDiff, oldValue);
       this.runninDisconnectionStrategy = false;
-    }, 4000);
+    }, 4000) as any;
   }
 
   private async getBitRate(): Promise<BitRateStats> {

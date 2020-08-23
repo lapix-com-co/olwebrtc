@@ -43,14 +43,24 @@ const call = new WebRTCCall({
 call.start({
   roomId: "vip-room",
   mediaStreamConstrains: {
-    video: {
-      width: { min: 720 },
-      height: { min: 480 },
-      frameRate: { max: 30 },
+    camera: {
+      video: {
+        width: { min: 720 },
+        height: { min: 480 },
+        frameRate: { max: 30 },
+      },
+      audio: {
+        noiseSuppression: true,
+      },
     },
-    audio: {
-      noiseSuppression: true,
-    },
+    // By default it will share the camera stream, if you want to
+    // share your screen just call the `shareScreen` method, by now
+    // it does not renegotiate, it just close the connection and start
+    // a new one, then if you what to share the camera again just call
+    // the `shareVideo` method.
+    screen: {
+      video: true,
+    }, 
   },
 });
 
@@ -75,6 +85,10 @@ this.toggleVideo();
 
 // Peer controls.
 const {video, audio} = call.externalControls;
+
+// Share screen or camera.
+call.shareScreen();
+call.shareVideo();
 
 // Has the call been finished.
 this.finished = call.finished;

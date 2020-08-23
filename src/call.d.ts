@@ -17,9 +17,14 @@ declare interface EventMap {
   error: Error;
 }
 
+declare interface CallMediaStreamConstraints {
+  camera: MediaStreamConstraints;
+  screen: MediaStreamConstraints;
+}
+
 declare interface StartInput {
   roomId: string;
-  mediaStreamConstrains: MediaStreamConstraints;
+  mediaStreamConstrains: CallMediaStreamConstraints;
 }
 
 declare interface NetworkStatus {
@@ -28,7 +33,7 @@ declare interface NetworkStatus {
   off(type: "change", cb: (isOnline: boolean) => any): void;
 }
 
-declare type DeviceType = "camera" | "microphone";
+declare type DeviceType = "camera" | "microphone" | "screen";
 
 declare interface Statistics<K> {
   find(peer: RTCPeerConnection): Promise<K>;
@@ -121,6 +126,16 @@ declare interface Call {
    * Selected a new device.
    */
   nextVideoDevice(): Promise<void>;
+
+  /**
+   * Shares the current screen with the microphone audio.
+   */
+  shareScreen(): Promise<void>;
+
+  /**
+   * Shares the camera video with the microphone audio.
+   */
+  shareVideo(): Promise<void>;
 
   /**
    * Send arbitrary data to the other peer.
