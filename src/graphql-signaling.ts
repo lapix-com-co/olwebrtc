@@ -1,6 +1,7 @@
 import { ApolloClient, gql, FetchResult } from "@apollo/client";
 import { TinyEmitter } from "tiny-emitter";
 import { DocumentNode } from "graphql";
+import { Signaling, RoomInfo, SDPAnswer, SDPOffer, ICECandidate, SignalingEventMap } from "./signaling";
 import logger from "./log";
 
 export class GraphqlSignaling implements Signaling {

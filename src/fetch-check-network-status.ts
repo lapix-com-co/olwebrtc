@@ -1,5 +1,6 @@
 import { TinyEmitter } from "tiny-emitter";
 import log from "./log";
+import { NetworkStatus } from "./call";
 
 export class FetchCheckNetworkStatus implements NetworkStatus {
   private emitter: TinyEmitter = new TinyEmitter();
