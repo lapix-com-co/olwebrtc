@@ -1,3 +1,5 @@
+import { Statistics } from "./call";
+
 export interface BitRateStats {
   video: { input: number; output: number };
   audio: { input: number; output: number };

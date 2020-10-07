@@ -1,5 +1,6 @@
 import {TinyEmitter} from 'tiny-emitter';
 import NetInfo, {NetInfoState} from '@react-native-community/netinfo';
+import { NetworkStatus } from "./call";
 
 export class RNCheckNetworkStatus implements NetworkStatus {
   private emitter: TinyEmitter = new TinyEmitter();

@@ -6,6 +6,7 @@ export enum ErrorCodes {
     DEVICE_PERMISSION_ERROR,
 }
 
+import { DeviceType } from "./call";
 export class CallError extends Error {
     public readonly code: ErrorCodes;
     constructor(message: string, code: ErrorCodes) {

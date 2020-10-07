@@ -1,14 +1,14 @@
-declare interface ExternalControls {
+export interface ExternalControls {
   video: boolean;
   audio: boolean;
 }
 
-declare interface MessageContent {
+export interface MessageContent {
   type: "ec" | "message";
   data: any;
 }
 
-declare interface EventMap {
+export interface EventMap {
   "track-change": undefined;
   "local-track-change": undefined;
   change: undefined;
@@ -17,32 +17,32 @@ declare interface EventMap {
   error: Error;
 }
 
-declare interface CallMediaStreamConstraints {
+export interface CallMediaStreamConstraints {
   camera: MediaStreamConstraints;
   screen: MediaStreamConstraints;
 }
 
-declare interface StartInput {
+export interface StartInput {
   roomId: string;
   mediaStreamConstrains: CallMediaStreamConstraints;
 }
 
-declare interface NetworkStatus {
+export interface NetworkStatus {
   isOnline<K extends { timeout: number }>(op: K): Promise<boolean>;
   on(type: "change", cb: (isOnline: boolean) => any): void;
   off(type: "change", cb: (isOnline: boolean) => any): void;
 }
 
-declare type DeviceType = "camera" | "microphone" | "screen";
+export type DeviceType = "camera" | "microphone" | "screen";
 
-declare interface Statistics<K> {
+export interface Statistics<K> {
   find(peer: RTCPeerConnection): Promise<K>;
 }
 
 /**
  * Handles a video call.
  */
-declare interface Call {
+export interface Call {
   finished: boolean;
   /**
    * Has been open to the signaling server.

@@ -1,13 +1,16 @@
+import { ExternalControls } from "./call";
 import { TinyEmitter } from "tiny-emitter";
 import sdpTransform from "sdp-transform";
 import { LogLevelDesc } from "loglevel";
 import {CallError, DeviceError, ErrorCodes} from "./errors";
 import { Bitrate, BitRateStats } from "./bitrate";
 import logger from "./log";
+import { EventMap, NetworkStatus, Call, StartInput, DeviceType, MessageContent } from "./call";
+import { Signaling } from "./signaling";
 
 type BandWidthLimit = number | "unlimited";
 
-interface WebRTCCallOptions {
+export interface WebRTCCallOptions {
   signaling: Signaling;
   network: NetworkStatus;
   rtcConfiguration: RTCConfiguration;
@@ -375,7 +378,7 @@ export class WebRTCCall implements Call {
       );
     }
 
-    // If we have a 'front' cam, will select it.
+    // If we have a 'front' camera, it will select it.
     if (!this._videoDevice) {
       this._videoDevice = devices.find((device) => {
         // @ts-ignore This works only in ReactNative.
