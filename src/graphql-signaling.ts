@@ -9,6 +9,12 @@ export class GraphqlSignaling implements Signaling {
   private emitter: TinyEmitter = new TinyEmitter();
   private subscription?: ZenObservable.Subscription;
 
+  // This timer ensures that the given connection will notify
+  // that the current peer has been joined to the room.
+  // This will send a message every 5 seconds to the backed
+  // to check that it gets connected.
+  private timer?: number;
+
   constructor(private apolloClient: ApolloClient<any>) {}
 
   get connected(): boolean {
@@ -33,6 +39,21 @@ export class GraphqlSignaling implements Signaling {
     );
 
     return { id: request.data.sendICECandidate.id };
+  }
+
+  async joined(input: {roomId: string}): Promise<RoomInfo> {
+    const request = await this._send(
+      gql`
+        mutation($input: JoinedInput!) {
+          joined(input: $input) {
+            id
+          }
+        }
+      `,
+      { input: { roomID: input.roomId } }
+    );
+
+    return { id: request.data.joined.id };
   }
 
   async sendSDPAnswer(input: SDPAnswer): Promise<RoomInfo> {
@@ -92,6 +113,7 @@ export class GraphqlSignaling implements Signaling {
       query: gql`
         subscription($input: RoomInteractionInput!) {
           onRoomInteraction(input: $input) {
+            joined
             newPeer
             newOffer
             newAnswer
@@ -108,35 +130,44 @@ export class GraphqlSignaling implements Signaling {
     this.subscription = observer.subscribe({
       next: (props: FetchResult<any>) => {
         const {data} = props;
-        logger.debug("[SIGNALING] subscription next", data);
-
         const content = data.onRoomInteraction;
 
-        if (content.newPeer) {
+        this.clearTimer();
+
+        logger.debug("[SIGNALING] subscription next", data);
+
+        if (content.joined) {
+          this._dispatchEvent("newPeer", { id: JSON.parse(content.joined) });
+        } else if (content.newPeer) {
           this._dispatchEvent("newPeer", { id: JSON.parse(content.newPeer) });
         }
+
         if (content.disconnected) {
           this._dispatchEvent("disconnect", {
             id: JSON.parse(content.disconnected),
           });
         }
+
         if (content.finished) {
           this._dispatchEvent("finished", {
             id: JSON.parse(content.finished),
           });
         }
+
         if (content.newOffer) {
           this._dispatchEvent("newOffer", {
             sdp: new RTCSessionDescription(JSON.parse(content.newOffer)),
             roomId: input.id,
           });
         }
+
         if (content.newAnswer) {
           this._dispatchEvent("newAnswer", {
             sdp: new RTCSessionDescription(JSON.parse(content.newAnswer)),
             roomId: input.id,
           });
         }
+
         if (content.newIceCandidate) {
           this._dispatchEvent("newIceCandidate", {
             candidate: JSON.parse(content.newIceCandidate),
@@ -150,6 +181,8 @@ export class GraphqlSignaling implements Signaling {
         this.subscribed = false;
         this._dispatchEvent("error", errorValue);
         this._dispatchEvent("close", null);
+        this.initializeTimer(input.id);
+        this.joined({ roomId: input.id });
       },
       complete: () => {
         logger.info("[SIGNALING] subscription completed");
@@ -157,7 +190,11 @@ export class GraphqlSignaling implements Signaling {
         this.subscribed = false;
         this._dispatchEvent("close", null);
       },
-    });
+    }); 
+
+    this.initializeTimer(input.id);
+
+    this.joined({ roomId: input.id });
 
     return input;
   }
@@ -166,6 +203,7 @@ export class GraphqlSignaling implements Signaling {
     this.subscription?.unsubscribe();
     this.apolloClient?.stop();
     this.subscribed = false;
+    this.clearTimer();
     return input;
   }
 
@@ -195,5 +233,24 @@ export class GraphqlSignaling implements Signaling {
       mutation,
       variables,
     });
+  }
+
+  private clearTimer() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = undefined;
+    }
+  }
+
+  private initializeTimer(roomId: string) {
+    if (this.timer) {
+      return;
+    }
+
+    this.timer = setInterval(() => {
+      logger.info('[SIGNALING] Did notify the backend about the connection status');
+
+      this.joined({ roomId });
+    }, 10000) as any;
   }
 }

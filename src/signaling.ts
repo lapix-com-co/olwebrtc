@@ -8,6 +8,8 @@ export interface SignalingEventMap {
   close: null;
 
   /** A new peer has been open. */
+  joined: RoomInfo;
+  /** A new peer has been open. */
   newPeer: RoomInfo;
   /** Some peer has been disconnect from the signaling server. */
   disconnect: RoomInfo;

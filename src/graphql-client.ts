@@ -9,6 +9,7 @@ const signalingOperations: string[] = [
   "sendICECandidate",
   "finishCall",
   "onRoomInteraction",
+  "joined",
 ];
 
 export default function newCallClient(

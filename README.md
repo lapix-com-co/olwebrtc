@@ -109,5 +109,8 @@ It works with ReactNative, you only need to replace the
 - [ ] Fix the max bandwidth.
 - [ ] Make it flexible.
 
+## Thanks to
+- [Cerrajeros a domicilio en Bogotá](https://wwww.domicilios247.com/cerrajeria/).
+
 ## License
 ISC
